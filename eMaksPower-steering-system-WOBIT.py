@@ -9,9 +9,11 @@
 #* Company  : Ko³o Naukowe Robotyków                                         *#
 #*                                                                           *#
 #* Author   : Hubert Graczyk / Piotr Saffarini                               *#
-#* Date     : 18.08.2019                                                     *#
+#* Date     : 17.09.2019                                                     *#
 #*===========================================================================*#
 
+Desired_position = 0    # Joy Y position               
+max_position = 5000     # Max absolute limit position  
 
 # Configuration Init  -----------------------------------------------------------
 def InitPars():
@@ -46,77 +48,102 @@ def InitPars():
    Sp(0x3910, 0x00, 8)                # MOTOR_PolN
    Sp(0x3911, 0x00, 2)                # MOTOR_Polarity
 
-   Sp(0x3962, 0x00, 2000)             # MOTOR_ENC_Resolution
-
-# Configuration of CAN frames -------------------------------------------------
+   Sp(0x3962, 0x00, 2000)             # MOTOR_ENC_Resolution 
    
+   # Movement parameters ------------------------------------------------------                 
+   Sp(0x3003, 0x00, 7)                # DEV_Mode - POS mode
+   Sp(0x3300, 0x00, 1000)             # Velocity = 1000 RPM 
+   Sp(0x334C, 0x00, 0)                # Deactivate the ramp generator 
+     
+   '''
+   Sp(0x334C, 0x00, 1)                # Activate the ramp generator
+   Sp(0x3340, 0x00, 2000)             # Acceleration_dV = 2000 RPM 
+   Sp(0x3341, 0x00, 100)              # Acceleration_dT = 100 s                                                          
+   Sp(0x3342, 0x00, 1000)             # Deceleration_dV = 1000 RPM
+   Sp(0x3343, 0x00, 200)              # Deceleration_dT = 200 s   
+   '''
+   
+   Sp(0x3004, 0x00, 1)                # DEV_Enable - Enable
+       
+# Configuration of CAN frames -------------------------------------------------
+
    Sp(0x2011, 0x02, 1684107116)       # ...tion - Default parameter communication
    Sp(0x2011, 0x05, 1684107116)       # DS2000_RestoreD...000 - Default parameter
-    
-    
+
+
    # ===== RX CAN CONFIG ===== #
-   Sp(0x1400, 0x01, 0xC0000D40)       # COP_RxPDO1_CommunicationParameter_CobId
-   Sp(0x1400, 0x01, 0x40000D40)       # COP_RxPDO1_CommunicationParameter_CobId 
-   
-   Sp(0x1401, 0x01, 0xC0000D41)       # COP_RxPDO2_CommunicationParameter_CobId
-   Sp(0x1401, 0x01, 0x40000D41)       # COP_RxPDO2_CommunicationParameter_CobId
-   
-   Sp(0x1402, 0x01, 0xC0000D42)       # COP_RxPDO3_CommunicationParameter_CobId
-   Sp(0x1402, 0x01, 0x40000D42)       # COP_RxPDO3_CommunicationParameter_CobId
-   
-   # ===== RX FRAME DATA ===== #        
-   #0xD40
+   Sp(0x1400, 0x01, 0xC000021D)       # COP_RxPDO1_CommunicationParameter_CobId
+   Sp(0x1400, 0x01, 0x4000021D)       # COP_RxPDO1_CommunicationParameter_CobId
+
+   Sp(0x1401, 0x01, 0xC000022D)       # COP_RxPDO2_CommunicationParameter_CobId
+   Sp(0x1401, 0x01, 0x4000022D)       # COP_RxPDO2_CommunicationParameter_CobId
+
+   Sp(0x1402, 0x01, 0xC000030D)       # COP_RxPDO3_CommunicationParameter_CobId
+   Sp(0x1402, 0x01, 0x4000030D)       # COP_RxPDO3_CommunicationParameter_CobId
+
+   # ===== RX FRAME DATA ===== #
+   #0x21D
    Sp(0x1600, 0x00, 0x0)              # Disable mapping
-   Sp(0x1600, 0x01, 0x31580108)       # object 0: LED State (1 bytes)
-   Sp(0x1600, 0x02, 0x33000020)       # object 1: Desired Velocity (4 bytes)
-   Sp(0x1600, 0x00, 0x2)              # Enable mapping with 2 objects   
-   
-   #0xD41
-   Sp(0x1601, 0x00, 0x0)              # Disable mapping
-   Sp(0x1601, 0x01, 0x33400020)       # object 0: Acceleration dV(4 bytes)
-   Sp(0x1601, 0x02, 0x33410020)       # object 1: Acceleration dT(4 bytes)
-   Sp(0x1601, 0x00, 0x2)              # Enable mapping with 2 objects  
-   
-   #0xD42
-   Sp(0x1602, 0x00, 0x0)              # Disable mapping
-   Sp(0x1602, 0x01, 0x37620020)       # object 0: Acctual Position(4 bytes)
-   Sp(0x1602, 0x02, 0x37900020)       # object 1: Absolute move(4 bytes)
-   Sp(0x1602, 0x00, 0x2)              # Enable mapping with 2 objects
-   
+   Sp(0x1600, 0x01, 0x33400020)       # object 0: JOY_ADC_X AXIS in % (2 bytes)
+   Sp(0x1600, 0x00, 0x1)              # Enable mapping with 1 objects
+
+   #0x22D
+   Sp(0x1601, 0x00, 0x0)              # Disable mapping       
+   Sp(0x1601, 0x01, 0x51010110)       # object 0: JOY_ADC_Y AXIS in % (2 bytes)
+   Sp(0x1601, 0x00, 0x1)              # Enable mapping with 1 objects          
+
+   #0x30D
+   Sp(0x1603, 0x00, 0x0)              # Disable mapping
+   Sp(0x1603, 0x01, 0x31580008)       # object 0: LED Enable (1 bytes)
+   Sp(0x1603, 0x02, 0x31580108)       # object 1: LED State (1 bytes)
+   Sp(0x1603, 0x00, 0x2)              # Enable mapping with 2 objects
+
    # ===== TX CAN CONFIG ===== #
-   Sp(0x1800, 0x01, 0xC0000D20)       # COP_TxPDO1_CommunicationParameter_CobId
-   Sp(0x1800, 0x01, 0x40000D20)       # COP_TxPDO1_CommunicationParameter_CobId 
+   Sp(0x1800, 0x01, 0xC000031D)       # COP_TxPDO1_CommunicationParameter_CobId
+   Sp(0x1800, 0x01, 0x4000031D)       # COP_TxPDO1_CommunicationParameter_CobId
+
+   Sp(0x1801, 0x01, 0xC000032D)       # COP_TxPDO2_CommunicationParameter_CobId
+   Sp(0x1801, 0x01, 0x4000032D)       # COP_TxPDO2_CommunicationParameter_CobId
+
+   Sp(0x1802, 0x01, 0xC000033D)       # COP_TxPDO3_CommunicationParameter_CobId
+   Sp(0x1802, 0x01, 0x4000033D)       # COP_TxPDO3_CommunicationParameter_CobId    
    
-   Sp(0x1801, 0x01, 0xC0000D21)       # COP_TxPDO2_CommunicationParameter_CobId
-   Sp(0x1801, 0x01, 0x40000D21)       # COP_TxPDO2_CommunicationParameter_CobId 
-   
-   Sp(0x1802, 0x01, 0xC0000D22)       # COP_TxPDO3_CommunicationParameter_CobId
-   Sp(0x1802, 0x01, 0x40000D22)       # COP_TxPDO3_CommunicationParameter_CobId 
-   
-   Sp(0x1803, 0x01, 0x80000000)       # COP_TxPDO4_CommunicationParameter_CobId
-   Sp(0x1803, 0x01, 0x80000000)       # COP_TxPDO4_CommunicationParameter_CobId  
-   
-   # ===== TX FRAME DATA ===== #  
-   #0xD20
-   Sp(0x1A00, 0x00, 0x0)              # Disable mapping                     
-   Sp(0x1A00, 0x01, 0x31100020)       # object 0: Electronic Voltage [mV](4 bytes) 
-   Sp(0x1A00, 0x02, 0x31110020)       # object 1: Power Voltage [mV](4 bytes)    
-   Sp(0x1A00, 0x00, 0x2)              # Enable mapping with 2 objects       
-   
-   #0xD21
+   Sp(0x1803, 0x01, 0xC000034D)       # COP_TxPDO4_CommunicationParameter_CobId
+   Sp(0x1803, 0x01, 0x4000034D)       # COP_TxPDO4_CommunicationParameter_CobId
+
+
+   # ===== TX FRAME DATA ===== #
+   #0x31D
+   Sp(0x1A00, 0x00, 0x0)              # Disable mapping
+   Sp(0x1A00, 0x01, 0x31100020)       # object 0: Electronic Voltage [mV](4 bytes)
+   Sp(0x1A00, 0x02, 0x31110020)       # object 1: Power Voltage [mV](4 bytes)
+   Sp(0x1A00, 0x00, 0x2)              # Enable mapping with 2 objects
+
+   #0x32D
    Sp(0x1A01, 0x00, 0x0)              # Disable mapping
    Sp(0x1A01, 0x01, 0x31120020)       # object 0: Motor Voltage [mV] (4 bytes)
-   Sp(0x1A01, 0x02, 0x31130020)       # object 0: Motor Current [mA] (4 bytes)
-   Sp(0x1A01, 0x00, 0x2)              # Enable mapping with 2 objects  
-   
-   #0xD22
+   Sp(0x1A01, 0x02, 0x31130020)       # object 1: Motor Current [mA] (4 bytes)
+   Sp(0x1A01, 0x00, 0x2)              # Enable mapping with 2 objects
+
+   #0x33D
    Sp(0x1A02, 0x00, 0x0)              # Disable mapping
    Sp(0x1A02, 0x01, 0x31140010)       # object 0: Electronic Temperature (2 bytes)
    Sp(0x1A02, 0x00, 0x1)              # Enable mapping with 1 objects   
    
-           
+   #0x34D
+   Sp(0x1A03, 0x00, 0x0)              # Disable mapping
+   Sp(0x1A03, 0x01, 0x33620020)       # object 0: Actual Velocity (4 bytes) 
+   Sp(0x1A03, 0x02, 0x37620020)       # object 1: Actual Motor Position (4 bytes)
+   Sp(0x1A03, 0x00, 0x2)              # Enable mapping with 2 objects
+
+
 # Main program ================================================================
-InitPars()
+InitPars()                                     
+Sp(0x2040,0x02,5)                     # NMT communication Enable 
+Sp(0x3790,0x00,(Desired_position-50)/50*max_position)    # POS_Mova - absolute moving      
 
 # Main loop -------------------------------------------------------------------
-while 1:          
+while 1:
+   pass
+
+
