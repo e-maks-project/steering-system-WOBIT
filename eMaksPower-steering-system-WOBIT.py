@@ -18,6 +18,9 @@ DefUserVar(name="x_axis_value", value = 0, descr ="", min_value=0x0, max_value =
 DefUserVar(name="y_dir", value = 1, descr ="", min_value=0x00, max_value =0xFFFF)# Y DIR - 0x5102.01h
 DefUserVar(name="y_axis_value", value = 0, descr ="", min_value=0x0, max_value =0xFFFF)# Y Joy position - 0x5102.02h
 
+DefUserVar(name="x_precent_value", value = 0, descr ="", min_value=0x0, max_value =0xFF)# X Joy position in precentage scale - 0x5103.01h
+DefUserVar(name="y_precent_value", value = 0, descr ="", min_value=0x0, max_value =0xFF)# Y Joy position in precentage scale - 0x5103.02h
+
 # Configuration Init  -----------------------------------------------------------
 def InitPars():
    Sp(0x3004, 0x00, 0)                # DEV_Enable - Disable
@@ -56,9 +59,9 @@ def InitPars():
    # Movement parameters ------------------------------------------------------
    Sp(0x3003, 0x00, 7)                # DEV_Mode - POS mode
    Sp(0x3720, 0x00, -250)             # POS_PositionLimitMin - lower limit = -250 ink
-   Sp(0x3720, 0x01, 250)              # POS_PositionLimitMax - upper limit = 250 ink  
-   #Sp(0x3762, 0x00, 0)               # POS_ActualPosition - set postion to 0 
-   
+   Sp(0x3720, 0x01, 250)              # POS_PositionLimitMax - upper limit = 250 ink
+   #Sp(0x3762, 0x00, 0)               # POS_ActualPosition - set postion to 0
+
    Sp(0x3321, 0x00, 1500)             # VEL_LimitMaxPos - pos. limit = 1500
    Sp(0x3323, 0x00, 1500)             # VEL_LimitMaxNeg - neg. limit = 1500
    Sp(0x3304, 0x00, 0x0300)           # Enable Velocity from 0x3300 value
@@ -91,17 +94,17 @@ def InitPars():
    Sp(0x1402, 0x01, 0x4000030D)       # COP_RxPDO3_CommunicationParameter_CobId
 
 # ===== RX FRAME DATA ===== #
-   #0x21D - AXIS X
-   Sp(0x1600, 0x00, 0x0)              # Disable mapping
-   Sp(0x1600, 0x01, 0x51010110)       # object 0: DIR: 1-Forward, 0-Rear (2 byte)
-   Sp(0x1600, 0x02, 0x51010210)       # object 1: JOY_ADC_X AXIS Value % (2 bytes)
-   Sp(0x1600, 0x00, 0x2)              # Enable mapping with 3 objects
-
-   #0x22D - AXIS Y
-   Sp(0x1601, 0x00, 0x0)              # Disable mapping
-   Sp(0x1601, 0x01, 0x51020110)       # object 0: DIR: 1-Forward, 0-Rear (2 byte)
-   Sp(0x1601, 0x02, 0x51020210)       # object 1: JOY_ADC_Y AXIS Value % (2 bytes)
-   Sp(0x1601, 0x00, 0x2)              # Enable mapping with 3 objects
+   #0x21D - AXIS X                                                                  
+   Sp(0x1600, 0x00, 0x0)              # Disable mapping                             
+   Sp(0x1600, 0x01, 0x51010210)       # object 0: JOY_ADC_X AXIS Value % (2 bytes)  
+   Sp(0x1600, 0x02, 0x51010110)       # object 1: DIR: 1-Forward, 0-Rear (2 byte)   
+   Sp(0x1600, 0x00, 0x2)              # Enable mapping with 3 objects               
+                                                                                    
+   #0x22D - AXIS Y                                                                  
+   Sp(0x1601, 0x00, 0x0)              # Disable mapping                             
+   Sp(0x1601, 0x01, 0x51020210)       # object 0: JOY_ADC_Y AXIS Value % (2 bytes)  
+   Sp(0x1601, 0x02, 0x51020110)       # object 1: DIR: 1-Forward, 0-Rear (2 byte)   
+   Sp(0x1601, 0x00, 0x2)              # Enable mapping with 3 objects               
 
    #0x30D - LEDs State
    Sp(0x1602, 0x00, 0x0)              # Disable mapping
@@ -148,23 +151,20 @@ def InitPars():
    Sp(0x1A03, 0x00, 0x2)              # Enable mapping with 2 objects
 
 
-
-
 # Main program ================================================================
 InitPars()
 Sp(0x2040,0x02,5)                     # NMT communication Enable
 
 # Main loop -------------------------------------------------------------------
-while 1:
-   Sp(0x3790, 0x00, (y_axis_value/256*Gp(0x3720,0x01)))     # POS_Mova - odczyt 1:1
+while 1:   
+   y_precent_value = (y_axis_value*128)/65535  #precentage conversion
 
-''' #Przeskalowane procentowo                       
-   if(x_dir == 1):
-     Sp(0x3300, 0x00, (y_axis_value/100 * Gp(0x3720, 0x01)))     
-     
-   elif(x_dir == 0): 
-     Sp(0x3300, 0x00, (-y_axis_value/100 * Gp(0x3323, 0x00)))
-'''
+   if(y_dir == 1):
+     Sp(0x3790, 0x00,((y_precent_value) * Gp(0x3720, 0x01)/100))
+
+   elif(y_dir == 0):
+     Sp(0x3790, 0x00,((y_precent_value) * Gp(0x3720, 0x00)/100))
+
 
 
 
