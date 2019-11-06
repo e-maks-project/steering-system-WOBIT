@@ -21,6 +21,8 @@ DefUserVar(name="y_axis_value", value = 0, descr ="", min_value=0x0, max_value =
 DefUserVar(name="x_precent_value", value = 0, descr ="", min_value=0x0, max_value =0xFF)# X Joy position in precentage scale - 0x5103.01h
 DefUserVar(name="y_precent_value", value = 0, descr ="", min_value=0x0, max_value =0xFF)# Y Joy position in precentage scale - 0x5103.02h
 
+DefUserVar(name="previous_value", value = 0, descr ="", min_value=0x0, max_value =0xFF) # Previous read values
+
 # Configuration Init  -----------------------------------------------------------
 def InitPars():
    Sp(0x3004, 0x00, 0)                # DEV_Enable - Disable
@@ -54,18 +56,18 @@ def InitPars():
    Sp(0x3910, 0x00, 8)                # MOTOR_PolN
    Sp(0x3911, 0x00, 2)                # MOTOR_Polarity
 
-   Sp(0x3962, 0x00, 2000)             # MOTOR_ENC_Resolution
+   Sp(0x3962, 0x00, 2000)             # MOTOR_ENC_Resolution  
 
    # Movement parameters ------------------------------------------------------
    Sp(0x3003, 0x00, 7)                # DEV_Mode - POS mode
-   Sp(0x3720, 0x00, -250)             # POS_PositionLimitMin - lower limit = -250 ink
-   Sp(0x3720, 0x01, 250)              # POS_PositionLimitMax - upper limit = 250 ink
-   #Sp(0x3762, 0x00, 0)               # POS_ActualPosition - set postion to 0
+   Sp(0x3720, 0x00, -500)             # POS_PositionLimitMin - lower limit = -250 ink
+   Sp(0x3720, 0x01, 500)              # POS_PositionLimitMax - upper limit = 250 ink
+   Sp(0x3762, 0x00, 0)                # POS_ActualPosition - set postion to 0
 
    Sp(0x3321, 0x00, 1500)             # VEL_LimitMaxPos - pos. limit = 1500
    Sp(0x3323, 0x00, 1500)             # VEL_LimitMaxNeg - neg. limit = 1500
    Sp(0x3304, 0x00, 0x0300)           # Enable Velocity from 0x3300 value
-   Sp(0x3300, 0x00, 100)              # Set Velocity = 100 RPM
+   Sp(0x3300, 0x00, 1000)             # Set Velocity = 1000 RPM
    Sp(0x334C, 0x00, 0)                # Deactivate the ramp generator
 
    '''
@@ -75,7 +77,12 @@ def InitPars():
    Sp(0x3342, 0x00, 1000)             # Deceleration_dV = 1000 RPM
    Sp(0x3343, 0x00, 200)              # Deceleration_dT = 200 s
    '''
-
+    
+   # PID regulator
+   Sp(0x3310, 0x00, 80)               # VEL_Kp - Kp = 80 
+   Sp(0x3311, 0x00, 0)                # VEL_Ki - Ki = 0
+   Sp(0x3312, 0x00, 100)              # VEL_Kd - Kd = 100       
+   
    Sp(0x3004, 0x00, 1)                # DEV_Enable - Enable
 
 # Configuration of CAN frames -------------------------------------------------
@@ -94,17 +101,17 @@ def InitPars():
    Sp(0x1402, 0x01, 0x4000030D)       # COP_RxPDO3_CommunicationParameter_CobId
 
 # ===== RX FRAME DATA ===== #
-   #0x21D - AXIS X                                                                  
-   Sp(0x1600, 0x00, 0x0)              # Disable mapping                             
-   Sp(0x1600, 0x01, 0x51010210)       # object 0: JOY_ADC_X AXIS Value % (2 bytes)  
-   Sp(0x1600, 0x02, 0x51010110)       # object 1: DIR: 1-Forward, 0-Rear (2 byte)   
-   Sp(0x1600, 0x00, 0x2)              # Enable mapping with 3 objects               
-                                                                                    
-   #0x22D - AXIS Y                                                                  
-   Sp(0x1601, 0x00, 0x0)              # Disable mapping                             
-   Sp(0x1601, 0x01, 0x51020210)       # object 0: JOY_ADC_Y AXIS Value % (2 bytes)  
-   Sp(0x1601, 0x02, 0x51020110)       # object 1: DIR: 1-Forward, 0-Rear (2 byte)   
-   Sp(0x1601, 0x00, 0x2)              # Enable mapping with 3 objects               
+   #0x21D - AXIS X
+   Sp(0x1600, 0x00, 0x0)              # Disable mapping
+   Sp(0x1600, 0x01, 0x51010210)       # object 0: JOY_ADC_X AXIS Value % (2 bytes)
+   Sp(0x1600, 0x02, 0x51010110)       # object 1: DIR: 1-Forward, 0-Rear (2 byte)
+   Sp(0x1600, 0x00, 0x2)              # Enable mapping with 3 objects
+
+   #0x22D - AXIS Y
+   Sp(0x1601, 0x00, 0x0)              # Disable mapping
+   Sp(0x1601, 0x01, 0x51020210)       # object 0: JOY_ADC_Y AXIS Value % (2 bytes)
+   Sp(0x1601, 0x02, 0x51020110)       # object 1: DIR: 1-Forward, 0-Rear (2 byte)
+   Sp(0x1601, 0x00, 0x2)              # Enable mapping with 3 objects
 
    #0x30D - LEDs State
    Sp(0x1602, 0x00, 0x0)              # Disable mapping
@@ -156,8 +163,11 @@ InitPars()
 Sp(0x2040,0x02,5)                     # NMT communication Enable
 
 # Main loop -------------------------------------------------------------------
-while 1:   
+while 1:
    y_precent_value = (y_axis_value*128)/65535  #precentage conversion
+
+   if(previous_value == 0):                    # Digital Filter
+     Sp(0x3790,0x00,0)
 
    if(y_dir == 1):
      Sp(0x3790, 0x00,((y_precent_value) * Gp(0x3720, 0x01)/100))
@@ -165,6 +175,6 @@ while 1:
    elif(y_dir == 0):
      Sp(0x3790, 0x00,((y_precent_value) * Gp(0x3720, 0x00)/100))
 
-
+   previous_value = y_precent_value
 
 
