@@ -9,7 +9,7 @@
 #* Company  : Ko³o Naukowe Robotyków                                         *#
 #*                                                                           *#
 #* Author   : Hubert Graczyk / Piotr Saffarini                               *#
-#* Date     : 17.09.2019                                                     *#
+#* Date     : 29.11.2019                                                     *#
 #*===========================================================================*#
 
 DefUserVar(name="x_dir", value = 1, descr ="", min_value=0x00, max_value =0xFFFF)# X DIR - 0x5101.01h
@@ -29,19 +29,23 @@ def InitPars():
    Sp(0x3000, 0x00, 0x1)              # DEV_Cmd - Clear error
    Sp(0x3000, 0x00, 0x82)             # DEV_Cmd - Default parameter
 
-   Sp(0x3221, 0x00, 10000)            # CURR_LimitMaxPos
-   Sp(0x3223, 0x00, 10000)            # CURR_LimitMaxNeg
-   Sp(0x3224, 0x01, 10000)            # CURR_DynLimitPeak
-   Sp(0x3224, 0x02, 5000)             # CURR_DynLimitCont
+   Sp(0x3221, 0x00, 25000)            # CURR_LimitMaxPos
+   Sp(0x3223, 0x00, 25000)            # CURR_LimitMaxNeg
+   #Sp(0x3224, 0x01, 40000)            # CURR_DynLimitPeak
+   #Sp(0x3224, 0x02, 8000)             # CURR_DynLimitCont
 
-   Sp(0x3240, 0x00, 10000)            # CURR_Acc_dI
-   Sp(0x3241, 0x00, 10000)            # CURR_Acc_dT
-   Sp(0x3242, 0x00, 10000)            # CURR_Dec_dI
-   Sp(0x3243, 0x00, 100)              # CURR_Dec_dT
+   Sp(0x324C, 0x00, 0)                # CURR_RampType  deactivate
+
+   '''
+   Sp(0x324C, 0x00, 1)                # CURR_RampType activate
+
+   Sp(0x3240, 0x00, 20000)            # CURR_Acc_dI
+   Sp(0x3241, 0x00, 20000)            # CURR_Acc_dT
+   Sp(0x3242, 0x00, 20000)            # CURR_Dec_dI
+   Sp(0x3243, 0x00, 20000)            # CURR_Dec_dT
    Sp(0x3244, 0x00, 40000)            # CURR_Dec_QuickStop_dI
    Sp(0x3245, 0x00, 50)               # CURR_Dec_QuickStop_dT
-
-   Sp(0x324C, 0x00, 1)                # CURR_RampType
+   '''
 
    Sp(0x3350, 0x00, 0x94A)            # VEL_Feedback
 
@@ -56,33 +60,38 @@ def InitPars():
    Sp(0x3910, 0x00, 8)                # MOTOR_PolN
    Sp(0x3911, 0x00, 2)                # MOTOR_Polarity
 
-   Sp(0x3962, 0x00, 2000)             # MOTOR_ENC_Resolution  
 
    # Movement parameters ------------------------------------------------------
    Sp(0x3003, 0x00, 7)                # DEV_Mode - POS mode
-   Sp(0x3720, 0x00, -500)             # POS_PositionLimitMin - lower limit = -250 ink
-   Sp(0x3720, 0x01, 500)              # POS_PositionLimitMax - upper limit = 250 ink
+   Sp(0x3720, 0x00, -335)             # POS_PositionLimitMin - lower limit = -287 ink
+   Sp(0x3720, 0x01, 300)              # POS_PositionLimitMax - upper limit = 287 ink
    Sp(0x3762, 0x00, 0)                # POS_ActualPosition - set postion to 0
 
-   Sp(0x3321, 0x00, 1500)             # VEL_LimitMaxPos - pos. limit = 1500
-   Sp(0x3323, 0x00, 1500)             # VEL_LimitMaxNeg - neg. limit = 1500
+   Sp(0x3321, 0x00, 2000)             # VEL_LimitMaxPos - pos. limit = 2000
+   Sp(0x3323, 0x00, 2000)             # VEL_LimitMaxNeg - neg. limit = 2000
    Sp(0x3304, 0x00, 0x0300)           # Enable Velocity from 0x3300 value
-   Sp(0x3300, 0x00, 1000)             # Set Velocity = 1000 RPM
-   Sp(0x334C, 0x00, 0)                # Deactivate the ramp generator
+   Sp(0x3300, 0x00, 1500)             # Set Velocity = 1500 RPM
 
-   '''
+
+   #Sp(0x334C, 0x00, 0)                # Deactivate the ramp generator
+
+
    Sp(0x334C, 0x00, 1)                # Activate the ramp generator
    Sp(0x3340, 0x00, 2000)             # Acceleration_dV = 2000 RPM
-   Sp(0x3341, 0x00, 100)              # Acceleration_dT = 100 s
-   Sp(0x3342, 0x00, 1000)             # Deceleration_dV = 1000 RPM
-   Sp(0x3343, 0x00, 200)              # Deceleration_dT = 200 s
-   '''
-    
-   # PID regulator
-   Sp(0x3310, 0x00, 80)               # VEL_Kp - Kp = 80 
-   Sp(0x3311, 0x00, 0)                # VEL_Ki - Ki = 0
-   Sp(0x3312, 0x00, 100)              # VEL_Kd - Kd = 100       
-   
+   Sp(0x3341, 0x00, 1000)             # Acceleration_dT = 1000 ms
+   Sp(0x3342, 0x00, 2000)             # Deceleration_dV = 2000 RPM
+   Sp(0x3343, 0x00, 1000)             # Deceleration_dT = 1000 ms
+
+
+   # PID Velocity regulator
+   Sp(0x3310, 0x00, 15)               # VEL_Kp - Kp = 20
+   Sp(0x3311, 0x00, 10)               # VEL_Ki - Ki = 10
+   Sp(0x3312, 0x00, 40)               # VEL_Kd - Kd = 20
+
+   # PI Current regulator
+   Sp(0x3210, 0x00, 50)               # CURR_Kp - set factor Kp of the current controller
+   Sp(0x3211, 0x00, 32)               # CURR_Ki - set factor Ki of the current controller
+
    Sp(0x3004, 0x00, 1)                # DEV_Enable - Enable
 
 # Configuration of CAN frames -------------------------------------------------
@@ -164,17 +173,18 @@ Sp(0x2040,0x02,5)                     # NMT communication Enable
 
 # Main loop -------------------------------------------------------------------
 while 1:
-   y_precent_value = (y_axis_value*128)/65535  #precentage conversion
+   Sp(0x3000, 0x00, 0x1)              # DEV_Cmd - Clear error
 
-   if(previous_value == 0):                    # Digital Filter
-     Sp(0x3790,0x00,0)
+   y_precent_value = (y_axis_value*128)/65535   #precentage conversion
 
-   if(y_dir == 1):
-     Sp(0x3790, 0x00,((y_precent_value) * Gp(0x3720, 0x01)/100))
+   # Right
+   if(y_dir == 1 and (y_precent_value > 10) ):
+     Sp(0x3790, 0x00,(150*(y_precent_value)/100 * Gp(0x3720, 0x01)/100))
 
-   elif(y_dir == 0):
-     Sp(0x3790, 0x00,((y_precent_value) * Gp(0x3720, 0x00)/100))
+   #Left
+   elif(y_dir == 0 and (y_precent_value > 10)):
+     Sp(0x3790, 0x00,(170*(y_precent_value)/100 * Gp(0x3720, 0x00)/100))
 
-   previous_value = y_precent_value
-
+   else:
+     Sp(0x3790, 0x00,0)
 
